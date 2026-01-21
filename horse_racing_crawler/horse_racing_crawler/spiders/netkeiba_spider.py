@@ -8,7 +8,7 @@ from horse_racing_crawler.items import ShutubaItem
 
 class NetkeibaSpider(scrapy.Spider):
     name = "NetkeibaSpider"
-    allowed_domains = ["race.netkeiba.com"]
+    allowed_domains = ["race.netkeiba.com", "db.netkeiba.com"]
 
     def __init__(self, race_id=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,6 +44,13 @@ class NetkeibaSpider(scrapy.Spider):
             horse_weight_text = self._get_text(row, "td.Horse_Weight::text")
             horse_weight, horse_weight_diff = self._parse_weight(horse_weight_text)
 
+            if horse_link:
+                yield response.follow(horse_link, callback=self.parse_horse)
+            if jockey_link:
+                yield response.follow(jockey_link, callback=self.parse_jockey)
+            if trainer_link:
+                yield response.follow(trainer_link, callback=self.parse_trainer)
+
             yield ShutubaItem(
                 race_id=self.race_id,
                 bracket_number=self._to_int(bracket_number),
@@ -58,6 +65,15 @@ class NetkeibaSpider(scrapy.Spider):
                 horse_weight=horse_weight,
                 horse_weight_diff=horse_weight_diff,
             )
+
+    def parse_horse(self, response):
+        return None
+
+    def parse_jockey(self, response):
+        return None
+
+    def parse_trainer(self, response):
+        return None
 
     def _get_text(self, row, selector):
         value = row.css(selector).get()
