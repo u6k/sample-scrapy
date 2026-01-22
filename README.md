@@ -12,12 +12,23 @@ pip install scrapy
 
 ```bash
 cd horse_racing_crawler
-OUTPUT_DIR=./output CACHE_DIR=./httpcache scrapy crawl NetkeibaSpider -a race_id=202506050811
+OUTPUT_DIR=./output CACHE_DIR=./httpcache scrapy crawl NetkeibaSpider -a start_url=https://race.netkeiba.com/race/shutuba.html?race_id=202506050811
+```
+
+```bash
+cd horse_racing_crawler
+OUTPUT_DIR=./output CACHE_DIR=./httpcache scrapy crawl NetkeibaSpider -a start_url=https://db.netkeiba.com/horse/2021110048/
 ```
 
 - 出力先は `${OUTPUT_DIR}/race_{race_id}.json.gz` です。
 - HTTPキャッシュは `.json.gz` 形式で `${CACHE_DIR}` に保存されます。
 - 欠損値は `null` で出力されます。
+- `start_url` が必須です。
+- `start_url` の対応URL種別は以下の通りです。
+  - 出馬表: `https://race.netkeiba.com/race/shutuba.html?race_id=...`
+  - 馬: `https://db.netkeiba.com/horse/<id>/`
+  - 騎手: `https://db.netkeiba.com/jockey/(result/recent/)?<id>/`
+  - 厩舎: `https://db.netkeiba.com/trainer/(result/recent/)?<id>/`
 
 ## 取得項目
 
