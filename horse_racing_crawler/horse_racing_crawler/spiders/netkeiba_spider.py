@@ -37,27 +37,64 @@ class NetkeibaSpider(scrapy.Spider):
         yield scrapy.Request(self.start_url, callback=callback)
 
     def parse(self, response):
-        rows = response.css("table.Shutuba_Table tr")
+        rows = response.xpath(
+            "//table[contains(@class,'ShutubaTable')]//tr[contains(@class,'HorseList')]"
+        )
         for row in rows:
-            horse_name = self._get_text(row, "td.Horse_Info a::text")
+            horse_name = self._get_xpath_text(
+                row,
+                "normalize-space(.//span[contains(@class,'HorseName')]/a/text()[1])",
+            )
             if not horse_name:
                 continue
-            bracket_number = self._get_text(row, "td.Waku span::text")
-            horse_number = self._get_text(row, "td.Umaban span::text")
-            horse_link = row.css("td.Horse_Info a::attr(href)").get()
-            jockey_link = row.css("td.Jockey a::attr(href)").get()
-            trainer_link = row.css("td.Trainer a::attr(href)").get()
+
+            bracket_number = self._get_xpath_text(
+                row,
+                "normalize-space(.//td[starts-with(@class,'Waku')]/span/text())",
+            )
+            horse_number = self._get_xpath_text(
+                row,
+                "normalize-space(.//td[starts-with(@class,'Umaban')]/text())",
+            )
+            horse_link = row.xpath(
+                ".//span[contains(@class,'HorseName')]/a/@href"
+            ).get()
+            jockey_link = row.xpath(".//td[contains(@class,'Jockey')]/a/@href").get()
+            trainer_link = row.xpath(".//td[contains(@class,'Trainer')]/a/@href").get()
 
             horse_id = self._extract_id(horse_link, r"/horse/(\d+)/")
-            jockey_id = self._extract_id(jockey_link, r"/jockey/(\d+)/")
-            trainer_id = self._extract_id(trainer_link, r"/trainer/(\d+)/")
+            jockey_id = self._extract_id(
+                jockey_link, r"/jockey/(?:result/recent/)?(\d+)/"
+            )
+            trainer_id = self._extract_id(
+                trainer_link, r"/trainer/(?:result/recent/)?(\d+)/"
+            )
 
-            jockey_name = self._get_text(row, "td.Jockey a::text")
-            trainer_name = self._get_text(row, "td.Trainer a::text")
-            jockey_weight = self._get_text(row, "td.Weight::text")
+            jockey_weight = self._get_xpath_text(
+                row,
+                "normalize-space(.//td[contains(@class,'Barei')]/following-sibling::td[1]/text())",
+            )
+            jockey_name = self._get_xpath_text(
+                row, "normalize-space(.//td[contains(@class,'Jockey')]/a/text())"
+            )
+            trainer_name = self._get_xpath_text(
+                row, "normalize-space(.//td[contains(@class,'Trainer')]/a/text())"
+            )
 
-            horse_weight_text = self._get_text(row, "td.Horse_Weight::text")
-            horse_weight, horse_weight_diff = self._parse_weight(horse_weight_text)
+            horse_weight_text = self._get_xpath_text(
+                row, "normalize-space(.//td[contains(@class,'Weight')]/text()[1])"
+            )
+            horse_weight_diff_text = self._get_xpath_text(
+                row, "normalize-space(.//td[contains(@class,'Weight')]/small/text())"
+            )
+            horse_weight = None
+            if horse_weight_text and horse_weight_text not in ("計不", "--"):
+                horse_weight = self._to_int(horse_weight_text)
+
+            horse_weight_diff = None
+            if horse_weight_diff_text:
+                diff_clean = horse_weight_diff_text.strip().lstrip("(").rstrip(")")
+                horse_weight_diff = self._to_int(diff_clean)
 
             if horse_link:
                 yield response.follow(horse_link, callback=self.parse_horse)
@@ -81,17 +118,15 @@ class NetkeibaSpider(scrapy.Spider):
                 horse_weight_diff=horse_weight_diff,
             )
 
-    def parse_horse(self, response):
-        return None
-
-    def parse_jockey(self, response):
-        return None
-
-    def parse_trainer(self, response):
-        return None
-
     def _get_text(self, row, selector):
         value = row.css(selector).get()
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+    def _get_xpath_text(self, row, selector):
+        value = row.xpath(selector).get()
         if value is None:
             return None
         value = value.strip()
