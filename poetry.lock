@@ -1,0 +1,39 @@
+# This lock file was generated manually due to restricted network access.
+# Regenerate with `poetry lock` in a network-enabled environment.
+
+[[package]]
+name = "boto3"
+version = "1.34.162"
+description = "The AWS SDK for Python"
+optional = false
+python-versions = ">=3.8"
+files = []
+
+[[package]]
+name = "flake8"
+version = "7.1.1"
+description = "the modular source code checker: pep8 pyflakes and co"
+optional = false
+python-versions = ">=3.8.1"
+files = []
+
+[[package]]
+name = "isort"
+version = "5.13.2"
+description = "A Python utility / library to sort Python imports."
+optional = false
+python-versions = ">=3.8.0"
+files = []
+
+[[package]]
+name = "scrapy"
+version = "2.11.2"
+description = "A high-level Web Crawling and Web Scraping framework"
+optional = false
+python-versions = ">=3.8"
+files = []
+
+[metadata]
+lock-version = "2.0"
+python-versions = ">=3.10,<3.13"
+content-hash = ""

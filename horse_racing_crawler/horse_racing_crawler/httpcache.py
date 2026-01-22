@@ -7,7 +7,6 @@ from hashlib import sha1
 
 import boto3
 from botocore.exceptions import ClientError
-
 from scrapy.http import Headers, HtmlResponse
 from scrapy.utils.python import to_unicode
 
