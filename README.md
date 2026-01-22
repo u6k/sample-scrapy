@@ -33,3 +33,13 @@ OUTPUT_DIR=./output CACHE_DIR=./httpcache scrapy crawl NetkeibaSpider -a race_id
 - trainer_name
 - horse_weight
 - horse_weight_diff
+
+## Spider Contractsによるチェック
+
+Spider Contractsは `db.netkeiba.com` のページに対して `scrapy check` を実行します。
+GitHub Actionsで実行するため、手元での実行が必要な場合はネットワークアクセスが可能な環境で以下を実行してください。
+
+```bash
+cd horse_racing_crawler
+scrapy check NetkeibaSpider
+```

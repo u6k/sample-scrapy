@@ -1,0 +1,25 @@
+name: Scrapy check
+
+on:
+  push:
+
+jobs:
+  scrapy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install scrapy
+
+      - name: Run scrapy check
+        working-directory: horse_racing_crawler
+        run: scrapy check NetkeibaSpider
