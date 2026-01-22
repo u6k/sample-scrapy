@@ -62,7 +62,7 @@ class NetkeibaSpider(scrapy.Spider):
             jockey_link = row.xpath(".//td[contains(@class,'Jockey')]/a/@href").get()
             trainer_link = row.xpath(".//td[contains(@class,'Trainer')]/a/@href").get()
 
-            horse_id = self._extract_id(horse_link, r"/horse/(\d+)/")
+            horse_id = self._extract_id(horse_link, r"/horse/(\d+)(?:/|$)")
             jockey_id = self._extract_id(
                 jockey_link, r"/jockey/(?:result/recent/)?(\d+)/"
             )
