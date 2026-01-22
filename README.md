@@ -5,23 +5,40 @@ netkeibaの出馬表ページ（1レース）を対象にスクレイピング�
 ## セットアップ
 
 ```bash
-pip install scrapy
+pip install scrapy boto3
 ```
 
 ## 使い方
 
-```bash
-cd horse_racing_crawler
-OUTPUT_DIR=./output CACHE_DIR=./httpcache scrapy crawl NetkeibaSpider -a start_url=https://race.netkeiba.com/race/shutuba.html?race_id=202506050811
-```
+### S3互換ストレージ出力
 
 ```bash
 cd horse_racing_crawler
-OUTPUT_DIR=./output CACHE_DIR=./httpcache scrapy crawl NetkeibaSpider -a start_url=https://db.netkeiba.com/horse/2021110048/
+S3_ENDPOINT_URL=https://minio.example.com \
+S3_ACCESS_KEY_ID=your-access-key \
+S3_SECRET_ACCESS_KEY=your-secret-key \
+S3_REGION_NAME=us-east-1 \
+S3_BUCKET=netkeiba-data \
+S3_HTTP_CACHE_PREFIX=httpcache \
+S3_FEEDS_PREFIX=feeds \
+scrapy crawl NetkeibaSpider -a start_url=https://race.netkeiba.com/race/shutuba.html?race_id=202506050811
 ```
 
-- 出力先は `${OUTPUT_DIR}/race_{race_id}.json.gz` です。
-- HTTPキャッシュは `.json.gz` 形式で `${CACHE_DIR}` に保存されます。
+#### S3互換ストレージ用の環境変数
+
+| 変数 | 説明 |
+| --- | --- |
+| `S3_ENDPOINT_URL` | S3互換ストレージのエンドポイントURL |
+| `S3_ACCESS_KEY_ID` | アクセスキー |
+| `S3_SECRET_ACCESS_KEY` | シークレットキー |
+| `S3_REGION_NAME` | リージョン（既定: `us-east-1`） |
+| `S3_BUCKET` | 対象バケット |
+| `S3_HTTP_CACHE_PREFIX` | HTTPキャッシュの保存先プレフィックス |
+| `S3_FEEDS_PREFIX` | クロール結果の保存先プレフィックス |
+HTTPキャッシュは `aa/<hash>.json.gz` のように先頭2文字で1階層に分散します。
+
+- S3互換ストレージ出力時は `s3://$S3_BUCKET/$S3_FEEDS_PREFIX/race_{race_id}.json.gz` に保存されます。
+- S3互換ストレージのHTTPキャッシュは `s3://$S3_BUCKET/$S3_HTTP_CACHE_PREFIX/<shard>/...` に保存されます。
 - 欠損値は `null` で出力されます。
 - `start_url` が必須です。
 - `start_url` の対応URL種別は以下の通りです。

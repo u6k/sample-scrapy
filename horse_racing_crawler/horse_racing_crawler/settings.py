@@ -16,11 +16,20 @@ AUTOTHROTTLE_START_DELAY = 1.0
 AUTOTHROTTLE_MAX_DELAY = 3.0
 AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 
-OUTPUT_DIR = os.getenv("OUTPUT_DIR", "./output")
-CACHE_DIR = os.getenv("CACHE_DIR", "./httpcache")
+S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
+S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID")
+S3_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY")
+S3_REGION_NAME = os.getenv("S3_REGION_NAME", "us-east-1")
+S3_BUCKET = os.getenv("S3_BUCKET")
+S3_HTTP_CACHE_PREFIX = os.getenv("S3_HTTP_CACHE_PREFIX", "httpcache")
+S3_FEEDS_PREFIX = os.getenv("S3_FEEDS_PREFIX", "feeds")
+HTTPCACHE_S3_SHARD_DEPTH = 1
+
+if not S3_BUCKET:
+    raise ValueError("S3_BUCKET is required for output and HTTP cache storage.")
 
 FEEDS = {
-    f"{OUTPUT_DIR}/race_%(race_id)s.json.gz": {
+    f"s3://{S3_BUCKET}/{S3_FEEDS_PREFIX}/race_%(race_id)s.json.gz": {
         "format": "json",
         "encoding": "utf8",
         "indent": 2,
@@ -29,9 +38,13 @@ FEEDS = {
 }
 
 FEED_STORAGES = {
-    "file": "horse_racing_crawler.feed_storage.GzipFileFeedStorage",
+    "s3": "horse_racing_crawler.feed_storage.GzipS3FeedStorage",
 }
 
 HTTPCACHE_ENABLED = True
-HTTPCACHE_DIR = CACHE_DIR
-HTTPCACHE_STORAGE = "horse_racing_crawler.httpcache.JsonGzipCacheStorage"
+HTTPCACHE_STORAGE = "horse_racing_crawler.httpcache.S3JsonGzipCacheStorage"
+
+AWS_ENDPOINT_URL = S3_ENDPOINT_URL
+AWS_ACCESS_KEY_ID = S3_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY = S3_SECRET_ACCESS_KEY
+AWS_REGION_NAME = S3_REGION_NAME
