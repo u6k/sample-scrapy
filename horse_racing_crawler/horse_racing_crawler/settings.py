@@ -41,4 +41,3 @@ SPIDER_CONTRACTS = {
     "scrapy.contracts.default.ReturnsContract": 1,
     "scrapy.contracts.default.ScrapesContract": 1,
 }
-SPIDER_CONTRACTS_BASE = "scrapy.contracts.default"
