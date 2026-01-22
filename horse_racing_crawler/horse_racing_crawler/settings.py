@@ -35,3 +35,10 @@ FEED_STORAGES = {
 HTTPCACHE_ENABLED = True
 HTTPCACHE_DIR = CACHE_DIR
 HTTPCACHE_STORAGE = "horse_racing_crawler.httpcache.JsonGzipCacheStorage"
+
+SPIDER_CONTRACTS = {
+    "scrapy.contracts.default.UrlContract": 1,
+    "scrapy.contracts.default.ReturnsContract": 1,
+    "scrapy.contracts.default.ScrapesContract": 1,
+}
+SPIDER_CONTRACTS_BASE = "scrapy.contracts.default"
