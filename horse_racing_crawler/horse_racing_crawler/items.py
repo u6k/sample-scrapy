@@ -19,20 +19,15 @@ class ShutubaItem(scrapy.Item):
 class HorseItem(scrapy.Item):
     horse_id = scrapy.Field()
     horse_name = scrapy.Field()
-    sex = scrapy.Field()
-    age = scrapy.Field()
-    birthday = scrapy.Field()
-    trainer_id = scrapy.Field()
     trainer_name = scrapy.Field()
-    owner_id = scrapy.Field()
+    trainer_id = scrapy.Field()
     owner_name = scrapy.Field()
-    breeder_id = scrapy.Field()
+    owner_id = scrapy.Field()
     breeder_name = scrapy.Field()
-    production = scrapy.Field()
+    breeder_id = scrapy.Field()
     coat_color = scrapy.Field()
-    father = scrapy.Field()
-    mother = scrapy.Field()
-    mother_father = scrapy.Field()
+    birth_date = scrapy.Field()
+    birthplace = scrapy.Field()
 
 
 class JockeyItem(scrapy.Item):

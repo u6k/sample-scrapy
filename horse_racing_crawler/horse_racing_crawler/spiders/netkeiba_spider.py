@@ -194,69 +194,61 @@ class NetkeibaSpider(scrapy.Spider):
         """
         @url https://db.netkeiba.com/horse/2021110048/
         @returns items 1 1
-        @scrapes horse_id horse_name sex age birthday trainer_id trainer_name owner_id owner_name breeder_id breeder_name production coat_color father mother mother_father
+        @scrapes horse_id horse_name trainer_name trainer_id owner_name owner_id breeder_name breeder_id coat_color birth_date birthplace
         """
-        horse_id = self._extract_id(response.url, r"/horse/(\d+)/")
-        horse_name = (
-            self._get_text(response, "div.horse_title h1::text")
-            or self._get_text(response, "div.horse_title h1 span::text")
+        horse_id = self._extract_id(response.url, r"/horse/(\d+)(?:/|$)")
+        horse_name = self._get_xpath_text(
+            response, '//div[contains(@class,"horse_title")]/h1/text()'
         )
-        sex = None
-        age = None
-        sex_age_text = " ".join(
-            text.strip()
-            for text in response.css(
-                "div.horse_title p::text, div.horse_title p span::text"
-            ).getall()
-            if text.strip()
+        title_text = self._get_xpath_text(
+            response,
+            'normalize-space(//div[contains(@class,"horse_title")]/p[@class="txt_01"]/text())',
         )
-        match = re.search(r"(牡|牝|セ)\s*(\d+)", sex_age_text)
-        if match:
-            sex = match.group(1)
-            age = self._to_int(match.group(2))
-
-        birthday_row = self._find_profile_row(response, "生年月日")
-        trainer_row = self._find_profile_row(response, "調教師")
-        owner_row = self._find_profile_row(response, "馬主")
-        breeder_row = self._find_profile_row(response, "生産者")
-        production_row = self._find_profile_row(response, "産地")
-        coat_row = self._find_profile_row(response, "毛色")
-        father_row = self._find_profile_row(response, "父")
-        mother_row = self._find_profile_row(response, "母")
-        mother_father_row = self._find_profile_row(response, "母父")
-
-        trainer_link = trainer_row.css("td a::attr(href)").get() if trainer_row else None
-        owner_link = owner_row.css("td a::attr(href)").get() if owner_row else None
-        breeder_link = breeder_row.css("td a::attr(href)").get() if breeder_row else None
-
+        coat_color = title_text.split()[-1] if title_text else None
+        birth_date = self._get_xpath_text(
+            response,
+            '//table[contains(@class,"db_prof_table")]//tr[th[normalize-space()="生年月日"]]/td/text()',
+        )
+        trainer_name = self._get_xpath_text(
+            response,
+            '//table[contains(@class,"db_prof_table")]//tr[th[normalize-space()="調教師"]]/td/a/text()',
+        )
+        trainer_href = self._get_xpath_text(
+            response,
+            '//table[contains(@class,"db_prof_table")]//tr[th[normalize-space()="調教師"]]/td/a/@href',
+        )
+        owner_name = self._get_xpath_text(
+            response,
+            '//table[contains(@class,"db_prof_table")]//tr[th[normalize-space()="馬主"]]/td/a/text()',
+        )
+        owner_href = self._get_xpath_text(
+            response,
+            '//table[contains(@class,"db_prof_table")]//tr[th[normalize-space()="馬主"]]/td/a/@href',
+        )
+        breeder_name = self._get_xpath_text(
+            response,
+            '//table[contains(@class,"db_prof_table")]//tr[th[normalize-space()="生産者"]]/td/a/text()',
+        )
+        breeder_href = self._get_xpath_text(
+            response,
+            '//table[contains(@class,"db_prof_table")]//tr[th[normalize-space()="生産者"]]/td/a/@href',
+        )
+        birthplace = self._get_xpath_text(
+            response,
+            '//table[contains(@class,"db_prof_table")]//tr[th[normalize-space()="産地"]]/td/text()',
+        )
         yield HorseItem(
             horse_id=horse_id,
             horse_name=horse_name,
-            sex=sex,
-            age=age,
-            birthday=self._get_profile_value(birthday_row) if birthday_row else None,
-            trainer_id=self._extract_id(trainer_link, r"/trainer/(\d+)/"),
-            trainer_name=(
-                self._get_text(trainer_row, "td a::text")
-                if trainer_row
-                else None
-            )
-            or (self._get_profile_value(trainer_row) if trainer_row else None),
-            owner_id=self._extract_id(owner_link, r"/owner/(\d+)/"),
-            owner_name=(self._get_text(owner_row, "td a::text") if owner_row else None)
-            or (self._get_profile_value(owner_row) if owner_row else None),
-            breeder_id=self._extract_id(breeder_link, r"/breeder/(\d+)/"),
-            breeder_name=(
-                self._get_text(breeder_row, "td a::text") if breeder_row else None
-            )
-            or (self._get_profile_value(breeder_row) if breeder_row else None),
-            production=self._get_profile_value(production_row) if production_row else None,
-            coat_color=self._get_profile_value(coat_row) if coat_row else None,
-            father=self._get_profile_value(father_row) if father_row else None,
-            mother=self._get_profile_value(mother_row) if mother_row else None,
-            mother_father=self._get_profile_value(mother_father_row)
-            if mother_father_row
-            else None,
+            trainer_name=trainer_name,
+            trainer_id=self._extract_id(trainer_href, r"/trainer/(\d+)(?:/|$)"),
+            owner_name=owner_name,
+            owner_id=self._extract_id(owner_href, r"/owner/(\d+)(?:/|$)"),
+            breeder_name=breeder_name,
+            breeder_id=self._extract_id(breeder_href, r"/breeder/(\d+)(?:/|$)"),
+            coat_color=coat_color,
+            birth_date=birth_date,
+            birthplace=birthplace,
         )
 
     def parse_jockey(self, response):
