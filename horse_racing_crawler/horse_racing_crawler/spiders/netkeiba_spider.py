@@ -281,24 +281,61 @@ class NetkeibaSpider(scrapy.Spider):
         """
         @url https://db.netkeiba.com/trainer/result/recent/01075/
         @returns items 1 1
-        @scrapes trainer_id trainer_name birthday hometown license_year affiliation
+        @scrapes trainer_id trainer_name birth_date affiliation birthplace debut_year debut_year_raw url
         """
-        trainer_id = self._extract_id(response.url, r"/trainer/(\d+)/")
-        trainer_name = (
-            self._get_text(response, "div.db_main h1::text")
-            or self._get_text(response, "div.db_main h1 span::text")
+        trainer_id = self._extract_id(response.url, r"/trainer/(\d+)(?:/|$)")
+        if not trainer_id:
+            canonical = self._get_xpath_text(
+                response, 'normalize-space(//link[@rel="canonical"]/@href)'
+            )
+            trainer_id = self._extract_id(canonical, r"/trainer/(\d+)(?:/|$)")
+
+        trainer_name = self._get_xpath_text(
+            response,
+            'normalize-space(//div[@id="db_main_box"]//div[contains(@class,"db_head_name")]//h1/text()[normalize-space()][1])',
         )
 
-        birthday_row = self._find_profile_row(response, "生年月日")
-        hometown_row = self._find_profile_row(response, "出身地")
-        license_row = self._find_profile_row(response, "初免許年")
-        affiliation_row = self._find_profile_row(response, "所属")
+        birth_date = self._get_xpath_text(
+            response,
+            'normalize-space(//div[@id="db_main_box"]//p[contains(@class,"txt_01")]/text()[normalize-space()][1])',
+        )
+        affiliation = self._get_xpath_text(
+            response,
+            'normalize-space(//div[@id="db_main_box"]//p[contains(@class,"txt_01")]/text()[normalize-space()][2])',
+        )
+
+        birthplace = self._get_xpath_text(
+            response,
+            'normalize-space(//table[@id="DetailTable"]//tr[th[normalize-space()="出身地"]]/td)',
+        )
+        debut_year_raw = self._get_xpath_text(
+            response,
+            'normalize-space(//table[@id="DetailTable"]//tr[th[normalize-space()="デビュー年"]]/td)',
+        )
+        debut_year = None
+        if debut_year_raw:
+            match = re.search(r"(\\d{4})年", debut_year_raw)
+            debut_year = match.group(1) if match else None
+
+        if (not birth_date) or (not affiliation):
+            header_line = self._get_xpath_text(
+                response,
+                'normalize-space(//div[@id="db_main_box"]//p[contains(@class,"txt_01")])',
+            )
+            if header_line:
+                match = re.search(r"(\\d{4}/\\d{2}/\\d{2})\\s*([^\\s]+)", header_line)
+                if not birth_date and match:
+                    birth_date = match.group(1)
+                if not affiliation and match:
+                    affiliation = match.group(2)
 
         yield TrainerItem(
             trainer_id=trainer_id,
             trainer_name=trainer_name,
-            birthday=self._get_profile_value(birthday_row) if birthday_row else None,
-            hometown=self._get_profile_value(hometown_row) if hometown_row else None,
-            license_year=self._get_profile_value(license_row) if license_row else None,
-            affiliation=self._get_profile_value(affiliation_row) if affiliation_row else None,
+            birth_date=birth_date,
+            affiliation=affiliation,
+            birthplace=birthplace,
+            debut_year=debut_year,
+            debut_year_raw=debut_year_raw,
+            url=response.url,
         )

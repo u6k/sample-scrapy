@@ -42,7 +42,9 @@ class JockeyItem(scrapy.Item):
 class TrainerItem(scrapy.Item):
     trainer_id = scrapy.Field()
     trainer_name = scrapy.Field()
-    birthday = scrapy.Field()
-    hometown = scrapy.Field()
-    license_year = scrapy.Field()
     affiliation = scrapy.Field()
+    birth_date = scrapy.Field()
+    birthplace = scrapy.Field()
+    debut_year = scrapy.Field()
+    debut_year_raw = scrapy.Field()
+    url = scrapy.Field()
