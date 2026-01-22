@@ -10,16 +10,31 @@ class NetkeibaSpider(scrapy.Spider):
     name = "NetkeibaSpider"
     allowed_domains = ["race.netkeiba.com", "db.netkeiba.com"]
 
-    def __init__(self, race_id=None, *args, **kwargs):
+    def __init__(self, start_url=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not race_id:
-            raise ValueError("race_id is required")
-        self.race_id = race_id
+        if not start_url:
+            raise ValueError("start_url is required")
+        self.start_url = start_url
+        self.start_url_type = self._classify_start_url(start_url)
+        if not self.start_url_type:
+            raise ValueError(f"Unsupported start_url: {start_url}")
+        if self.start_url_type == "shutuba":
+            self.race_id = self._extract_id(start_url, r"[?&]race_id=(\d+)")
+            if not self.race_id:
+                raise ValueError("start_url must include race_id for shutuba pages")
+        else:
+            self.race_id = None
 
     def start_requests(self):
         os.makedirs(os.getenv("OUTPUT_DIR", "./output"), exist_ok=True)
-        url = f"https://race.netkeiba.com/race/shutuba.html?race_id={self.race_id}"
-        yield scrapy.Request(url, callback=self.parse)
+        callback_map = {
+            "shutuba": self.parse,
+            "horse": self.parse_horse,
+            "jockey": self.parse_jockey,
+            "trainer": self.parse_trainer,
+        }
+        callback = callback_map[self.start_url_type]
+        yield scrapy.Request(self.start_url, callback=callback)
 
     def parse(self, response):
         rows = response.css("table.Shutuba_Table tr")
@@ -87,6 +102,17 @@ class NetkeibaSpider(scrapy.Spider):
             return None
         match = re.search(pattern, url)
         return match.group(1) if match else None
+
+    def _classify_start_url(self, url):
+        if re.search(r"^https?://race\.netkeiba\.com/race/shutuba\.html", url):
+            return "shutuba"
+        if re.search(r"^https?://db\.netkeiba\.com/horse/\d+/", url):
+            return "horse"
+        if re.search(r"^https?://db\.netkeiba\.com/jockey/(?:result/recent/)?\d+/", url):
+            return "jockey"
+        if re.search(r"^https?://db\.netkeiba\.com/trainer/(?:result/recent/)?\d+/", url):
+            return "trainer"
+        return None
 
     def _parse_weight(self, text):
         if not text:
