@@ -13,12 +13,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: "2.1.4"
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: poetry install --no-interaction --no-root
+
+      - name: Lint (ruff)
+        run: poetry run ruff check .
 
       - name: Run scrapy check
         working-directory: horse_racing_crawler
@@ -30,4 +36,4 @@ jobs:
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
           S3_HTTP_CACHE_PREFIX: ${{ secrets.S3_HTTP_CACHE_PREFIX }}
           S3_FEEDS_PREFIX: ${{ secrets.S3_FEEDS_PREFIX }}
-        run: scrapy check NetkeibaSpider
+        run: poetry run scrapy check NetkeibaSpider
